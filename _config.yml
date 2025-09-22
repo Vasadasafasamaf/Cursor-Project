@@ -1,0 +1,28 @@
+# GitHub Pages configuration
+theme: jekyll-theme-minimal
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - .gitignore
+  - .github/
+
+# Include files
+include:
+  - _redirects
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Site settings
+title: "Fashion Windows"
+description: "Interactive clothing showcase with TikTok integration"
+baseurl: ""
+url: ""
+
+# Navigation
+navigation:
+  - title: "Home"
+    url: "/"
+
