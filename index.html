@@ -1,10 +1,316 @@
 ﻿<!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Привет, мама!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Моя Найкраща Мама ❤️</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Reset та базові стилі */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 25%, #fecfef 75%, #a8edea 100%);
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    
+    /* Контейнер */
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 60px 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 800px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Декоративні елементи */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 182, 193, 0.1), transparent);
+      animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    /* Заголовок */
+    .main-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff6b9d, #c44569, #f8b500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+      animation: titleGlow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes titleGlow {
+      0% { filter: drop-shadow(0 0 10px rgba(255, 107, 157, 0.3)); }
+      100% { filter: drop-shadow(0 0 20px rgba(196, 69, 105, 0.5)); }
+    }
+    
+    /* Підзаголовок */
+    .subtitle {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 50px;
+      font-weight: 300;
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* Сітка кнопок */
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* Стилі кнопок */
+    .love-button {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #a8edea 100%);
+      border: none;
+      border-radius: 25px;
+      padding: 18px 30px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #333;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 25px rgba(255, 154, 158, 0.3);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .love-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s;
+    }
+    
+    .love-button:hover::before {
+      left: 100%;
+    }
+    
+    .love-button:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 15px 35px rgba(255, 154, 158, 0.4);
+      background: linear-gradient(135deg, #ff6b9d 0%, #fecfef 50%, #a8edea 100%);
+    }
+    
+    .love-button:active {
+      transform: translateY(-2px) scale(1.02);
+    }
+    
+    /* Сердечко анімація */
+    .heart {
+      display: inline-block;
+      margin-right: 8px;
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    /* Адаптивність */
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 3rem;
+      }
+      
+      .container {
+        padding: 40px 20px;
+        margin: 10px;
+      }
+      
+      .buttons-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      
+      .love-button {
+        padding: 15px 25px;
+        font-size: 1rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .main-title {
+        font-size: 2.5rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+    }
+    
+    /* Додаткові декоративні елементи */
+    .floating-hearts {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .floating-heart {
+      position: absolute;
+      color: rgba(255, 182, 193, 0.6);
+      font-size: 20px;
+      animation: float 6s infinite linear;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Привет, мама</h1>
+  <!-- Плаваючі сердечка -->
+  <div class="floating-hearts" id="floatingHearts"></div>
+  
+  <div class="container">
+    <h1 class="main-title">
+      <span class="heart">💖</span>
+      Моя Найкраща Мама
+      <span class="heart">💖</span>
+    </h1>
+    
+    <p class="subtitle">Кожна кнопка веде до твого TikTok профілю</p>
+    
+    <div class="buttons-grid">
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        💕 це моя мама
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        ❤️ люблю маму
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        🌟 мама найкраща
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        ✨ моя красуня
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        🌈 найкраща мама у світі
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        🦸‍♀️ мама – мій герой
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        💝 обожнюю свою маму
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        ☀️ мама – це сонце
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        🙏 подяка мамі
+      </a>
+      
+      <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="love-button">
+        💌 мамі з любов'ю
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // Створення плаваючих сердечок
+    function createFloatingHeart() {
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.innerHTML = '💖';
+      heart.style.left = Math.random() * 100 + '%';
+      heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+      heart.style.fontSize = (Math.random() * 10 + 15) + 'px';
+      
+      document.getElementById('floatingHearts').appendChild(heart);
+      
+      // Видалення сердечка після анімації
+      setTimeout(() => {
+        heart.remove();
+      }, 6000);
+    }
+    
+    // Створення сердечок кожні 2 секунди
+    setInterval(createFloatingHeart, 2000);
+    
+    // Додатковий ефект при кліку на кнопки
+    document.querySelectorAll('.love-button').forEach(button => {
+      button.addEventListener('click', function(e) {
+        // Створення спалаху сердечок при кліку
+        for(let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            createFloatingHeart();
+          }, i * 100);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
