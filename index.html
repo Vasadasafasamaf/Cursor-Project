@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nataly Rosso</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px 40px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    nav {
+      display: flex;
+      gap: 30px;
+    }
+    
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      transition: opacity 0.3s;
+    }
+    
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: #fff;
+      transition: width 0.3s;
+    }
+    
+    nav a:hover::after {
+      width: 100%;
+    }
+    
+    nav a:hover {
+      opacity: 0.7;
+    }
+    
+    main {
+      position: relative;
+      z-index: 1;
+      margin-top: 80px;
+    }
+    
+    .hero {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      position: relative;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+    }
+    
+    .hero h1 {
+      font-size: 4rem;
+      font-weight: 300;
+      letter-spacing: 5px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 1.2rem;
+      color: #aaa;
+      line-height: 1.8;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .section {
+      padding: 100px 40px;
+      position: relative;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 60px;
+      text-align: center;
+      position: relative;
+      padding-bottom: 20px;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+    }
+    
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .product-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .product-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .product-card:hover::before {
+      left: 100%;
+    }
+    
+    .product-card:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-5px);
+    }
+    
+    .product-image {
+      width: 100%;
+      height: 250px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+    
+    .product-image::after {
+      content: '📷';
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+    
+    .product-title {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .product-price {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 15px 0;
+    }
+    
+    .product-description {
+      color: #aaa;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .button {
+      background: #000;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 12px 30px;
+      text-decoration: none;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border: 2px solid #fff;
+      transform: translate(-50%, -50%);
+      transition: all 0.2s ease;
+    }
+    
+    .button:hover {
+      background: #fff;
+      color: #000;
+    }
+    
+    .button:hover::before {
+      width: 60%;
+      height: 60%;
+    }
+    
+    .button:active {
+      background: #333;
+      border-color: #666;
+      color: #fff;
+    }
+    
+    .seller-info {
+      max-width: 800px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 40px;
+      align-items: center;
+    }
+    
+    .seller-avatar {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+    
+    .seller-details h3 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .seller-details p {
+      color: #aaa;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+    
+    .social-links {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    .contact-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .contact-card h4 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .contact-card p {
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    
+    footer {
+      padding: 40px;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: #666;
+    }
+    
+    @media (max-width: 768px) {
+      header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      nav {
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .section {
+        padding: 60px 20px;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+      }
+      
+      .seller-info {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">NATALY ROSSO</div>
+    <nav>
+      <a href="#products">Товари</a>
+      <a href="#seller">Про продавця</a>
+      <a href="#contact">Контакти</a>
+    </nav>
+  </header>
+  
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Nataly Rosso</h1>
+        <p>Ексклюзивна колекція одягу та аксесуарів. Якість, стиль, індивідуальність.</p>
+      </div>
+    </section>
+    
+    <section id="products" class="section">
+      <h2 class="section-title">Товари</h2>
+      <div class="products-grid">
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Елегантна сукня</h3>
+          <div class="product-price">2 500 ₴</div>
+          <p class="product-description">Класична сукня для особливих випадків. Високоякісна тканина, ідеальний крій.</p>
+          <a href="#order" class="button">Замовити</a>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Стильний блейзер</h3>
+          <div class="product-price">3 200 ₴</div>
+          <p class="product-description">Універсальний блейзер для офісу та повсякденного життя. Класика та сучасність.</p>
+          <a href="#order" class="button">Замовити</a>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Комфортний светр</h3>
+          <div class="product-price">1 800 ₴</div>
+          <p class="product-description">М'який та затишний светр для прохолодних днів. Натуральні матеріали.</p>
+          <a href="#order" class="button">Замовити</a>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Елегантні туфлі</h3>
+          <div class="product-price">4 500 ₴</div>
+          <p class="product-description">Класичні туфлі високої якості. Зручність та стиль в одному.</p>
+          <a href="#order" class="button">Замовити</a>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Стильна сумка</h3>
+          <div class="product-price">2 200 ₴</div>
+          <p class="product-description">Елегантна сумка для щоденного використання. Якісні матеріали та дизайн.</p>
+          <a href="#order" class="button">Замовити</a>
+        </div>
+        
+        <div class="product-card">
+          <div class="product-image"></div>
+          <h3 class="product-title">Аксесуари</h3>
+          <div class="product-price">Від 500 ₴</div>
+          <p class="product-description">Широкий вибір аксесуарів для завершення вашого образу.</p>
+          <a href="#order" class="button">Переглянути</a>
+        </div>
+      </div>
+    </section>
+    
+    <section id="seller" class="section">
+      <h2 class="section-title">Про продавця</h2>
+      <div class="seller-info">
+        <div class="seller-avatar">👤</div>
+        <div class="seller-details">
+          <h3>Nataly Rosso</h3>
+          <p>Досвідчений стиліст та продавець одягу з багаторічним досвідом. Спеціалізуюся на підборі ексклюзивного одягу та аксесуарів.</p>
+          <p>Моя мета - допомогти вам виглядати стильно та впевнено в будь-якій ситуації. Кожен товар проходить ретельний відбір за критеріями якості та стилю.</p>
+          <div class="social-links">
+            <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="button">TikTok</a>
+            <a href="#contact" class="button">Зв'язатися</a>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section id="contact" class="section">
+      <h2 class="section-title">Контакти</h2>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h4>Замовлення</h4>
+          <p>Зв'яжіться зі мною для оформлення замовлення або консультації</p>
+          <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="button">Написати</a>
+        </div>
+        
+        <div class="contact-card">
+          <h4>Консультація</h4>
+          <p>Отримайте професійну консультацію з підбору одягу та стилю</p>
+          <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="button">Зв'язатися</a>
+        </div>
+        
+        <div class="contact-card">
+          <h4>Соціальні мережі</h4>
+          <p>Слідкуйте за новинками та акціями в моїх соціальних мережах</p>
+          <a href="https://www.tiktok.com/@nataly_rosso?_t=ZM-90UfimbwR6h&_r=1" target="_blank" class="button">TikTok</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <footer>
+    <p>&copy; 2024 Nataly Rosso. Всі права захищені.</p>
+  </footer>
+</body>
+</html>
