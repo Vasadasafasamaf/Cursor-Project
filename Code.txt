@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Оплата та доставка</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // ============================================
+        // КОНФІГУРАЦІЯ - ЗМІНІТЬ ДАНІ ТУТ
+        // ============================================
+        
+        // НАЗВА МАГАЗИНУ
+        const SHOP_NAME = "VEO SHOP";
+        
+        // РЕКВІЗИТИ ФОП
+        const FOP_NAME = "ФОП Шеремета Василь Анатолійович";
+        const EDRPOU = "3361708913";
+        const IBAN = "UA273220010000026009330077981";
+        const BANK_NAME = "Universal bank";
+        const PAYMENT_PURPOSE = "Послуга оптимізації реклами";
+        
+        // КОНТАКТИ
+        const TELEGRAM_USERNAME = "veoforce_support"; // Telegram username (без @)
+        const VIBER_PHONE = "0112223344"; // Номер Viber (10 цифр, починається з 0)
+        const TELEGRAM_SHOWCASE = "veoforce_chat"; // Telegram username вітрини (без @)
+        const INSTAGRAM_USERNAME = ""; // Instagram username (без @), якщо відсутній - залишити порожнім
+        
+        // КАЛЕНДАР ПРЯМИХ ЕФІРІВ
+        // Вставте iCal URL календаря (наприклад: "https://calendar.google.com/calendar/ical/.../public/basic.ics")
+        // Або embed URL або Calendar ID - система автоматично витягне необхідні дані
+        const GOOGLE_CALENDAR_URL_OR_ID = "https://calendar.google.com/calendar/ical/f1a82555ed6c28b6c4552f637cc150ae2ee0fa9f2d3f587e14e6819ea33a2da0%40group.calendar.google.com/public/basic.ics"; // iCal URL, embed URL або Calendar ID
+        const GOOGLE_CALENDAR_API_KEY = ""; // API ключ Google Calendar (опціонально, для публічних календарів не обов'язково)
+        
+        // УМОВИ ОПЛАТИ
+        const PAYMENT_OPTIONS = [
+            "🔷 Повна передоплата 100%",
+            "🔷 Накладний платіж з передоплатою 200 грн"
+        ];
+        
+        // УМОВИ ДОСТАВКИ
+        const DELIVERY_METHOD = "Нова пошта";
+        const DELIVERY_TIME = "1-3 робочі дні після отримання оплати";
+        const DELIVERY_NOTE = "Термін доставки залежить від регіону отримувача";
+        
+        // УМОВИ ПОВЕРНЕННЯ
+        // Кількість днів для обміну та повернення (0 = відсутнє)
+        // ІНСТРУКЦІЯ: Вкажіть кількість днів для обміну та повернення товару.
+        // Якщо обмін або повернення недоступні, встановіть значення 0.
+        // Наприклад: EXCHANGE_DAYS = 14 (обмін доступний 14 днів), RETURN_DAYS = 0 (повернення недоступне)
+        const EXCHANGE_DAYS = 14; // Кількість днів для обміну товару (0 якщо обмін недоступний)
+        const RETURN_DAYS = 14; // Кількість днів для повернення товару (0 якщо повернення недоступне)
+        const RETURN_CONDITIONS = [
+            "Товар повинен бути в оригінальному стані (не використовуваний, без слідів носіння)",
+            "Збережені всі етикетки, бирки та упаковка",
+            "Товар не повинен бути пошкоджений або забруднений"
+        ];
+        const RETURN_MONEY_TIME = "3-5 робочих днів";
+        const RETURN_DELIVERY_COST = "відповідно до тарифів перевізника. Сплачує отримувач. При поверненні товару через невідповідність розміру або інші причини з боку покупця, вартість доставки не повертається";
+        
+        // ПІСЛЯ ОПЛАТИ - ІНСТРУКЦІЇ
+        const AFTER_PAYMENT_TEMPLATE = `👤 ПІБ: 
+📍 Населений пункт: 
+📦 Відділення НП: 
+📱 Телефон отримувача: `;
+        
+        const AFTER_PAYMENT_EXAMPLE = `👤 ПІБ: Шевченко Тарас Григорович
+📍 Населений пункт: Київ
+📦 Відділення НП: 111
+📱 Телефон отримувача: +380112223344`;
+        
+        // ============================================
+        
+        // Функція для форматування номера
+        function formatPhoneNumber(phoneNumber) {
+            if (phoneNumber.length === 10 && phoneNumber.startsWith('0')) {
+                return "+380" + phoneNumber.substring(1);
+            }
+            return phoneNumber;
+        }
+        
+        // Функція для створення Viber URL
+        function createViberUrl(phoneNumber) {
+            const formattedNumber = formatPhoneNumber(phoneNumber);
+            return `viber://chat?number=${encodeURIComponent(formattedNumber)}`;
+        }
+        
+        // Функція для копіювання в буфер обміну
+        function copyToClipboard(text, buttonId) {
+            if (!checkSecurity()) return;
+            navigator.clipboard.writeText(text).then(function() {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = '✓ Скопійовано!';
+                    if (button.classList.contains('contact-copy-button') || button.classList.contains('contact-copy-button-small')) {
+                        button.style.background = 'rgba(40, 167, 69, 0.9)';
+                    } else {
+                        button.style.background = '#28a745';
+                    }
+                    setTimeout(function() {
+                        button.innerHTML = originalHTML;
+                        button.style.background = '';
+                    }, 2000);
+                }
+            }).catch(function(err) {
+                alert('Не вдалося скопіювати');
+            });
+        }
+        
+        function copyIBAN() {
+            copyToClipboard(IBAN, 'copyIbanButton');
+        }
+        
+        function copyEDRPOU() {
+            copyToClipboard(EDRPOU, 'copyEdrpouButton');
+        }
+        
+        function copyPaymentPurpose() {
+            copyToClipboard(PAYMENT_PURPOSE, 'copyPurposeButton');
+        }
+        
+        function copyTelegramUsername() {
+            copyToClipboard('@' + TELEGRAM_USERNAME, 'copyTelegramButton');
+        }
+        
+        function copyViberPhone() {
+            const formattedNumber = formatPhoneNumber(VIBER_PHONE);
+            copyToClipboard(formattedNumber, 'copyViberPhoneButton');
+        }
+        
+        function openTelegram() {
+            window.open('https://t.me/' + TELEGRAM_USERNAME, '_blank');
+        }
+        
+        function openViber() {
+            if (!checkSecurity()) return;
+            const viberUrl = createViberUrl(VIBER_PHONE);
+            window.location.href = viberUrl;
+        }
+        
+        function openTelegramShowcase() {
+            if (!checkSecurity() || !TELEGRAM_SHOWCASE) return;
+            window.open('https://t.me/' + TELEGRAM_SHOWCASE, '_blank');
+        }
+        
+        function copyTelegramShowcase() {
+            if (!checkSecurity() || !TELEGRAM_SHOWCASE) return;
+            secureCopy('@' + TELEGRAM_SHOWCASE, 'copyTelegramShowcaseButton');
+        }
+        
+        function openInstagram() {
+            if (!checkSecurity() || !INSTAGRAM_USERNAME) return;
+            window.open('https://instagram.com/' + INSTAGRAM_USERNAME, '_blank');
+        }
+        
+        function copyInstagramUsername() {
+            if (!checkSecurity() || !INSTAGRAM_USERNAME) return;
+            secureCopy('@' + INSTAGRAM_USERNAME, 'copyInstagramButton');
+        }
+        
+        // ============================================
+        // СИСТЕМА ЗАХИСТУ КОДУ
+        // ============================================
+        
+        // Функція перевірки безпеки
+        function checkSecurity() {
+            try {
+                // Перевірка footer
+                const footerCredit = document.getElementById('footerCreditBlock');
+                if (!footerCredit || footerCredit.offsetParent === null) {
+                    blockPage();
+                    return false;
+                }
+                
+                // Перевірка наявності тексту про автора
+                const footerText = footerCredit.textContent || '';
+                if (!footerText.includes('VEO FORCE') || !footerText.includes('2025')) {
+                    blockPage();
+                    return false;
+                }
+                
+                // Перевірка якорів
+                const anchors = [
+                    'veoAnchor1', 'veoAnchor2', 'veoAnchor3', 
+                    'veoAnchor4', 'veoAnchor5', 'veoAnchor6'
+                ];
+                
+                for (let i = 0; i < anchors.length; i++) {
+                    const anchor = document.getElementById(anchors[i]);
+                    if (!anchor) {
+                        blockPage();
+                        return false;
+                    }
+                    
+                    // Перевірка тексту якоря
+                    const anchorText = anchor.textContent || anchor.innerText || '';
+                    if (anchorText.trim() !== 'VEO FORCE') {
+                        blockPage();
+                        return false;
+                    }
+                    
+                    // Перевірка, що елемент не прихований через display:none
+                    const style = window.getComputedStyle(anchor);
+                    if (style.display === 'none' || style.visibility === 'hidden') {
+                        blockPage();
+                        return false;
+                    }
+                }
+                
+                return true;
+            } catch (e) {
+                blockPage();
+                return false;
+            }
+        }
+        
+        // Блокування сторінки
+        function blockPage() {
+            // Блокуємо всі функції
+            window.copyToClipboard = function() { return false; };
+            window.openTelegram = function() { return false; };
+            window.openViber = function() { return false; };
+            window.copyIBAN = function() { return false; };
+            window.copyEDRPOU = function() { return false; };
+            window.copyPaymentPurpose = function() { return false; };
+            window.copyTelegramUsername = function() { return false; };
+            window.copyViberPhone = function() { return false; };
+            window.openTelegramShowcase = function() { return false; };
+            window.copyTelegramShowcase = function() { return false; };
+            window.openInstagram = function() { return false; };
+            window.copyInstagramUsername = function() { return false; };
+            
+            // Показуємо повідомлення про помилку
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#E8E8E8;font-family:Montserrat,sans-serif;"><div style="text-align:center;padding:40px;background:white;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2);"><h1 style="color:#d32f2f;margin-bottom:20px;">⚠️ Помилка завантаження</h1><p style="color:#666;font-size:18px;">Сторінка пошкоджена або модифікована.<br>Будь ласка, використовуйте оригінальну версію.</p></div></div>';
+        }
+        
+        // Перевірка безпеки перед виконанням функцій
+        function secureCopy(text, buttonId) {
+            if (!checkSecurity()) return;
+            copyToClipboard(text, buttonId);
+        }
+        
+        // Оригінальні функції копіювання з захистом
+        function copyIBAN() {
+            if (!checkSecurity()) return;
+            secureCopy(IBAN, 'copyIbanButton');
+        }
+        
+        function copyEDRPOU() {
+            if (!checkSecurity()) return;
+            secureCopy(EDRPOU, 'copyEdrpouButton');
+        }
+        
+        function copyPaymentPurpose() {
+            if (!checkSecurity()) return;
+            secureCopy(PAYMENT_PURPOSE, 'copyPurposeButton');
+        }
+        
+        function copyTelegramUsername() {
+            if (!checkSecurity()) return;
+            secureCopy('@' + TELEGRAM_USERNAME, 'copyTelegramButton');
+        }
+        
+        function copyViberPhone() {
+            if (!checkSecurity()) return;
+            const formattedNumber = formatPhoneNumber(VIBER_PHONE);
+            secureCopy(formattedNumber, 'copyViberPhoneButton');
+        }
+        
+        function copyPaymentTemplate() {
+            if (!checkSecurity()) return;
+            secureCopy(AFTER_PAYMENT_TEMPLATE, 'copyTemplateButton');
+        }
+        
+        // ============================================
+        // КАЛЕНДАР ПРЯМИХ ЕФІРІВ
+        // ============================================
+        
+        // Функція витягування Calendar ID з URL
+        function extractCalendarId(urlOrId) {
+            if (!urlOrId) {
+                console.error('extractCalendarId: URL не надано');
+                return null;
+            }
+            
+            console.log('extractCalendarId: обробка URL:', urlOrId);
+            
+            // Якщо це вже Calendar ID (містить @), повертаємо як є
+            if (urlOrId.includes('@') && !urlOrId.startsWith('http')) {
+                console.log('extractCalendarId: знайдено Calendar ID без URL');
+                return urlOrId;
+            }
+            
+            // Якщо це URL, витягуємо Calendar ID
+            try {
+                // Для embed URL: https://calendar.google.com/calendar/embed?src=...
+                if (urlOrId.includes('/embed?')) {
+                    const url = new URL(urlOrId);
+                    const src = url.searchParams.get('src');
+                    if (src) {
+                        const calendarId = decodeURIComponent(src);
+                        console.log('extractCalendarId: витягнуто з embed URL:', calendarId);
+                        return calendarId;
+                    }
+                }
+                
+                // Для iCal URL: https://calendar.google.com/calendar/ical/.../public/basic.ics
+                if (urlOrId.includes('/ical/')) {
+                    // Витягуємо Calendar ID з URL (між /ical/ та /public/)
+                    // Може бути закодований (%40 замість @)
+                    const match = urlOrId.match(/\/ical\/([^\/]+)\//);
+                    if (match && match[1]) {
+                        // Декодуємо URL-кодування
+                        let calendarId = decodeURIComponent(match[1]);
+                        console.log('extractCalendarId: витягнуто з iCal URL (після декодування):', calendarId);
+                        
+                        // Перевіряємо, чи містить @ (якщо ні, можливо потрібно додати @group.calendar.google.com)
+                        if (!calendarId.includes('@')) {
+                            console.warn('extractCalendarId: Calendar ID не містить @, можливо неповний');
+                        }
+                        
+                        return calendarId;
+                    } else {
+                        console.error('extractCalendarId: не вдалося знайти Calendar ID в iCal URL');
+                    }
+                }
+                
+                // Якщо це простий Calendar ID
+                console.log('extractCalendarId: повертаємо як простий Calendar ID');
+                return urlOrId;
+            } catch (e) {
+                console.error('extractCalendarId: помилка парсингу URL:', e);
+                console.error('extractCalendarId: stack:', e.stack);
+                return null;
+            }
+        }
+        
+        // Завантаження подій з Google Calendar
+        async function loadCalendarEvents() {
+            // Завжди показуємо блок календаря
+            const calendarSection = document.getElementById('calendarSection');
+            if (calendarSection) {
+                calendarSection.style.display = 'block';
+            }
+            
+            if (!GOOGLE_CALENDAR_URL_OR_ID || GOOGLE_CALENDAR_URL_OR_ID.trim() === '') {
+                console.log('Calendar URL не вказано');
+                showCalendarNotSynced();
+                return;
+            }
+            
+            const calendarIdRaw = extractCalendarId(GOOGLE_CALENDAR_URL_OR_ID);
+            if (!calendarIdRaw) {
+                console.error('Не вдалося витягти Calendar ID з:', GOOGLE_CALENDAR_URL_OR_ID);
+                showCalendarNotSynced();
+                return;
+            }
+            
+            console.log('✅ Calendar ID витягнуто:', calendarIdRaw);
+            
+            // Перевіряємо, чи Calendar ID містить @ (повинен бути формат: id@group.calendar.google.com)
+            if (!calendarIdRaw.includes('@')) {
+                console.warn('⚠️ Calendar ID не містить @, можливо неповний:', calendarIdRaw);
+            }
+            
+            const calendarId = encodeURIComponent(calendarIdRaw);
+            console.log('📝 Calendar ID закодовано:', calendarId);
+            
+            try {
+                // Спочатку спробуємо через Google Calendar API (якщо є ключ)
+                if (GOOGLE_CALENDAR_API_KEY) {
+                    const now = new Date();
+                    const fiveDaysLater = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+                    
+                    const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
+                        `timeMin=${now.toISOString()}&` +
+                        `timeMax=${fiveDaysLater.toISOString()}&` +
+                        `singleEvents=true&` +
+                        `orderBy=startTime&` +
+                        `maxResults=50&` +
+                        `key=${GOOGLE_CALENDAR_API_KEY}`;
+                    
+                    const response = await fetch(apiUrl);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.items && data.items.length > 0) {
+                            displayCalendarEvents(data.items);
+                            document.getElementById('calendarSection').style.display = 'block';
+                            
+                            return;
+                        }
+                    }
+                }
+                
+                // Якщо API не працює або немає ключа, використовуємо iCal feed
+                // Використовуємо оригінальний URL, якщо він вже iCal, інакше формуємо
+                let icalUrl;
+                if (GOOGLE_CALENDAR_URL_OR_ID.includes('/ical/') && GOOGLE_CALENDAR_URL_OR_ID.includes('/public/basic.ics')) {
+                    // Використовуємо оригінальний URL без змін
+                    icalUrl = GOOGLE_CALENDAR_URL_OR_ID;
+                    console.log('Використовуємо оригінальний iCal URL:', icalUrl);
+                } else {
+                    // Формуємо iCal URL з Calendar ID
+                    icalUrl = `https://calendar.google.com/calendar/ical/${calendarId}/public/basic.ics`;
+                    console.log('Сформовано iCal URL:', icalUrl);
+                }
+                await loadCalendarFromICal(icalUrl, calendarIdRaw);
+                
+            } catch (error) {
+                console.error('Помилка завантаження календаря:', error);
+                console.error('Деталі помилки:', error.message, error.stack);
+                // Спробуємо завантажити через iCal як fallback
+                try {
+                    // Використовуємо оригінальний URL, якщо він вже iCal, інакше формуємо
+                    let icalUrl;
+                    if (GOOGLE_CALENDAR_URL_OR_ID.includes('/ical/') && GOOGLE_CALENDAR_URL_OR_ID.includes('/public/basic.ics')) {
+                        icalUrl = GOOGLE_CALENDAR_URL_OR_ID;
+                    } else {
+                        icalUrl = `https://calendar.google.com/calendar/ical/${calendarId}/public/basic.ics`;
+                    }
+                    console.log('Спроба завантажити через iCal fallback:', icalUrl);
+                    await loadCalendarFromICal(icalUrl, calendarIdRaw);
+                } catch (icalError) {
+                    console.error('Помилка завантаження через iCal fallback:', icalError);
+                    console.error('Деталі помилки iCal:', icalError.message);
+                    showCalendarNotSynced();
+                }
+            }
+        }
+        
+        // Завантаження через iCal feed
+        async function loadCalendarFromICal(icalUrl, calendarIdRaw) {
+            try {
+                console.log('Завантаження iCal з URL:', icalUrl);
+                
+                // Використовуємо прямий запит до публічного календаря Google
+                // Публічні календарі доступні без CORS обмежень
+                const response = await fetch(icalUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Accept': 'text/calendar, text/plain, */*'
+                    }
+                });
+                
+                console.log('Відповідь отримано, статус:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Помилка відповіді:', errorText);
+                    throw new Error('Не вдалося завантажити календар. Статус: ' + response.status + ', ' + response.statusText);
+                }
+                
+                const icalText = await response.text();
+                console.log('iCal завантажено, розмір:', icalText.length);
+                console.log('Перші 500 символів iCal:', icalText.substring(0, 500));
+                
+                const events = parseICal(icalText);
+                console.log('Подій знайдено:', events.length);
+                if (events.length > 0) {
+                    console.log('Перша подія:', events[0]);
+                }
+                
+                const calendarSection = document.getElementById('calendarSection');
+                if (!calendarSection) {
+                    console.error('Блок календаря не знайдено в DOM');
+                    showCalendarNotSynced();
+                    return;
+                }
+                
+                // Завжди показуємо блок календаря
+                calendarSection.style.display = 'block';
+                
+                if (events.length > 0) {
+                    displayCalendarEvents(events);
+                } else {
+                    // Показуємо повідомлення якщо подій немає
+                    const container = document.getElementById('calendarEvents');
+                    if (container) {
+                        container.innerHTML = '<div class="calendar-empty" style="text-align: center; padding: 30px; color: #8B6F47; font-size: 16px;">На найближчі 5 днів ефірів не заплановано</div>';
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Помилка завантаження iCal:', error);
+                console.error('Деталі помилки:', error.message);
+                console.error('Stack trace:', error.stack);
+                
+                // Показуємо повідомлення про помилку
+                const calendarSection = document.getElementById('calendarSection');
+                const container = document.getElementById('calendarEvents');
+                if (calendarSection) {
+                    calendarSection.style.display = 'block';
+                }
+                if (container) {
+                    container.innerHTML = '<div class="calendar-not-synced" style="text-align: center; padding: 30px; color: #8B6F47; font-size: 18px; font-weight: 600;">📅 Календар LIVE-трансляцій не синхронізовано<br><small style="font-size: 14px; color: #999; margin-top: 10px; display: block;">Помилка: ' + error.message + '</small></div>';
+                }
+                showCalendarNotSynced();
+            }
+        }
+        
+        // Парсинг iCal формату
+        function parseICal(icalText) {
+            const events = [];
+            const lines = icalText.split('\n');
+            let currentEvent = null;
+            let inEvent = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line === 'BEGIN:VEVENT') {
+                    inEvent = true;
+                    currentEvent = {};
+                } else if (line === 'END:VEVENT') {
+                    if (currentEvent && currentEvent.start) {
+                        try {
+                            // Створюємо Date об'єкт з UTC дати
+                            const startDate = new Date(currentEvent.start);
+                            const now = new Date();
+                            
+                            console.log('Обробка події:', {
+                                summary: currentEvent.summary,
+                                start: currentEvent.start,
+                                startDate: startDate,
+                                now: now
+                            });
+                            
+                            // Перевіряємо, чи дата валідна
+                            if (isNaN(startDate.getTime())) {
+                                console.warn('Невалідна дата події:', currentEvent.start);
+                            } else {
+                                // Встановлюємо час на початок дня для правильної фільтрації (локальний час)
+                                const nowLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+                                const fiveDaysLater = new Date(nowLocal.getTime() + 5 * 24 * 60 * 60 * 1000);
+                                fiveDaysLater.setHours(23, 59, 59, 999);
+                                
+                                // Конвертуємо startDate в локальний час для порівняння
+                                const startDateLocal = new Date(startDate.getTime());
+                                
+                                console.log('Перевірка діапазону:', {
+                                    startDateLocal: startDateLocal,
+                                    nowLocal: nowLocal,
+                                    fiveDaysLater: fiveDaysLater,
+                                    вДіапазоні: startDateLocal >= nowLocal && startDateLocal <= fiveDaysLater
+                                });
+                                
+                                // Перевіряємо, чи подія в межах 5 днів (включаючи сьогодні)
+                                // Також показуємо події, які вже почалися сьогодні
+                                if (startDateLocal <= fiveDaysLater) {
+                                    events.push({
+                                        summary: currentEvent.summary || 'Подія',
+                                        start: { dateTime: currentEvent.start },
+                                        end: { dateTime: currentEvent.end || currentEvent.start }
+                                    });
+                                    console.log('Подія додана:', currentEvent.summary);
+                                } else {
+                                    console.log('Подія не в діапазоні 5 днів:', currentEvent.summary);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Помилка обробки події:', e, currentEvent);
+                        }
+                    }
+                    inEvent = false;
+                    currentEvent = null;
+                } else if (inEvent && currentEvent) {
+                    if (line.startsWith('SUMMARY:')) {
+                        currentEvent.summary = line.substring(8).trim();
+                    } else if (line.startsWith('DTSTART')) {
+                        // Може бути DTSTART;VALUE=DATE або DTSTART:...
+                        const dateStr = line.includes(':') ? line.substring(line.indexOf(':') + 1) : '';
+                        if (dateStr) {
+                            currentEvent.start = parseICalDate(dateStr);
+                        }
+                    } else if (line.startsWith('DTEND')) {
+                        // Може бути DTEND;VALUE=DATE або DTEND:...
+                        const dateStr = line.includes(':') ? line.substring(line.indexOf(':') + 1) : '';
+                        if (dateStr) {
+                            currentEvent.end = parseICalDate(dateStr);
+                        }
+                    } else if (line.startsWith('DESCRIPTION:')) {
+                        currentEvent.description = line.substring(12).trim();
+                    }
+                }
+            }
+            
+            return events.sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
+        }
+        
+        // Парсинг дати з iCal формату
+        function parseICalDate(dateStr) {
+            // Формат: 20240115T120000Z або 20240115
+            if (dateStr.length >= 15 && dateStr.includes('T')) {
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                const hour = dateStr.substring(9, 11);
+                const minute = dateStr.substring(11, 13);
+                // Якщо дата в UTC (закінчується на Z), конвертуємо в ISO формат з Z
+                if (dateStr.endsWith('Z')) {
+                    return `${year}-${month}-${day}T${hour}:${minute}:00Z`;
+                }
+                return `${year}-${month}-${day}T${hour}:${minute}:00`;
+            } else if (dateStr.length === 8) {
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                return `${year}-${month}-${day}T00:00:00`;
+            }
+            return dateStr;
+        }
+        
+        // Відображення подій календаря
+        function displayCalendarEvents(events) {
+            const container = document.getElementById('calendarEvents');
+            container.innerHTML = '';
+            
+            if (events.length === 0) {
+                container.innerHTML = '<div class="calendar-empty">На найближчі 5 днів ефірів не заплановано</div>';
+                return;
+            }
+            
+            events.forEach(event => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'calendar-event';
+                
+                const startDate = new Date(event.start.dateTime || event.start.date);
+                const endDate = event.end ? new Date(event.end.dateTime || event.end.date) : null;
+                
+                const dateStr = formatEventDate(startDate);
+                const timeStr = formatEventTime(startDate, endDate);
+                
+                eventDiv.innerHTML = `
+                    <div class="calendar-event-date">${dateStr}</div>
+                    <div class="calendar-event-time">${timeStr}</div>
+                    <div class="calendar-event-title">${event.summary || 'Подія'}</div>
+                `;
+                
+                container.appendChild(eventDiv);
+            });
+        }
+        
+        // Показ повідомлення про відсутність синхронізації
+        function showCalendarNotSynced() {
+            const calendarSection = document.getElementById('calendarSection');
+            const calendarIframe = document.getElementById('calendarIframe');
+            const calendarContainer = document.querySelector('.calendar-container');
+            
+            if (!calendarSection) {
+                console.error('Блок календаря не знайдено');
+                return;
+            }
+            
+            calendarSection.style.display = 'block';
+            
+            // Приховуємо iframe та показуємо повідомлення
+            if (calendarIframe) {
+                calendarIframe.style.display = 'none';
+            }
+            
+            if (calendarContainer) {
+                // Створюємо повідомлення про помилку
+                let errorDiv = calendarContainer.querySelector('.calendar-error-message');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'calendar-error-message';
+                    errorDiv.style.cssText = 'text-align: center; padding: 30px; color: #8B6F47; font-size: 18px; font-weight: 600; border: 1px solid #FFD89B; border-radius: 15px; background: rgba(255, 243, 205, 0.8); margin-bottom: 25px;';
+                    calendarContainer.insertBefore(errorDiv, calendarContainer.firstChild);
+                }
+                errorDiv.innerHTML = '📅 Календар LIVE-трансляцій не синхронізовано';
+            }
+            
+        }
+        
+        // Форматування дати події
+        function formatEventDate(date) {
+            const days = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота'];
+            const months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 
+                          'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+            
+            const dayName = days[date.getDay()];
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            
+            return `${dayName}, ${day} ${month}`;
+        }
+        
+        // Форматування часу події
+        function formatEventTime(startDate, endDate) {
+            const formatTime = (date) => {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            };
+            
+            const startTime = formatTime(startDate);
+            
+            if (endDate) {
+                const endTime = formatTime(endDate);
+                return `${startTime} - ${endTime}`;
+            }
+            
+            return startTime;
+        }
+        
+        function openTelegram() {
+            if (!checkSecurity()) return;
+            window.open('https://t.me/' + TELEGRAM_USERNAME, '_blank');
+        }
+        
+        // Ініціалізація при завантаженні
+        document.addEventListener('DOMContentLoaded', function() {
+            // Перевірка безпеки перед ініціалізацією (після завантаження DOM)
+            setTimeout(function() {
+                if (!checkSecurity()) {
+                    return;
+                }
+            }, 200);
+            
+            // Заповнюємо дані на сторінці
+            // Назва магазину
+            const shopNameHeader = document.getElementById('shopNameHeader');
+            if (shopNameHeader) {
+                shopNameHeader.textContent = SHOP_NAME;
+            }
+            
+            // Назва календаря з назвою магазину
+            const calendarTitle = document.getElementById('calendarTitle');
+            if (calendarTitle) {
+                calendarTitle.textContent = SHOP_NAME + ': Розклад прямих ефірів';
+            }
+            
+            document.getElementById('fopName').textContent = FOP_NAME;
+            document.getElementById('edrpouValue').textContent = EDRPOU;
+            document.getElementById('ibanValue').textContent = IBAN;
+            document.getElementById('bankName').textContent = BANK_NAME;
+            document.getElementById('paymentPurposeValue').textContent = PAYMENT_PURPOSE;
+            document.getElementById('telegramUsername').textContent = '@' + TELEGRAM_USERNAME;
+            document.getElementById('viberPhone').textContent = formatPhoneNumber(VIBER_PHONE);
+            // Вітрина
+            if (TELEGRAM_SHOWCASE) {
+                document.getElementById('telegramShowcase').textContent = '@' + TELEGRAM_SHOWCASE;
+                document.getElementById('telegramShowcaseButtons').style.display = 'flex';
+                document.getElementById('telegramShowcaseUnavailable').style.display = 'none';
+            } else {
+                document.getElementById('telegramShowcase').textContent = 'Не налаштовано';
+                document.getElementById('telegramShowcaseButtons').style.display = 'none';
+                document.getElementById('telegramShowcaseUnavailable').style.display = 'block';
+            }
+            
+            // Instagram
+            document.getElementById('instagramColumn').style.display = 'block';
+            if (INSTAGRAM_USERNAME) {
+                document.getElementById('instagramUsername').textContent = '@' + INSTAGRAM_USERNAME;
+                document.getElementById('instagramButtons').style.display = 'flex';
+                document.getElementById('instagramUnavailable').style.display = 'none';
+            } else {
+                document.getElementById('instagramUsername').textContent = 'Не налаштовано';
+                document.getElementById('instagramButtons').style.display = 'none';
+                document.getElementById('instagramUnavailable').style.display = 'block';
+            }
+            
+            // Заповнюємо умови оплати
+            const paymentOptionsContainer = document.getElementById('paymentOptions');
+            paymentOptionsContainer.innerHTML = '';
+            PAYMENT_OPTIONS.forEach(function(option) {
+                const div = document.createElement('div');
+                div.className = 'payment-option';
+                div.innerHTML = '<strong>' + option + '</strong>';
+                paymentOptionsContainer.appendChild(div);
+            });
+            
+            // Заповнюємо умови доставки
+            document.getElementById('deliveryMethod').textContent = DELIVERY_METHOD;
+            document.getElementById('deliveryTime').textContent = DELIVERY_TIME;
+            document.getElementById('deliveryNote').textContent = DELIVERY_NOTE;
+            
+            // Заповнюємо умови обміну та повернення
+            const exchangeReturnList = document.getElementById('exchangeReturnList');
+            exchangeReturnList.innerHTML = '';
+            
+            // Додаємо інформацію про обмін, якщо він доступний
+            if (EXCHANGE_DAYS > 0) {
+                const exchangeLi = document.createElement('li');
+                exchangeLi.innerHTML = `🔄 <strong>Обмін:</strong> відповідно до законодавства України, у вас є право на обмін товару протягом <strong>${EXCHANGE_DAYS} днів</strong> з моменту отримання (окрім товарів, визначених законодавством)`;
+                exchangeReturnList.appendChild(exchangeLi);
+            }
+            
+            // Додаємо інформацію про повернення, якщо воно доступне
+            if (RETURN_DAYS > 0) {
+                const returnLi = document.createElement('li');
+                returnLi.innerHTML = `↩️ <strong>Повернення:</strong> відповідно до законодавства України, у вас є право на повернення товару протягом <strong>${RETURN_DAYS} днів</strong> з моменту отримання (окрім товарів, визначених законодавством)`;
+                exchangeReturnList.appendChild(returnLi);
+            }
+            
+            // Якщо обмін або повернення доступні, додаємо умови
+            if (EXCHANGE_DAYS > 0 || RETURN_DAYS > 0) {
+                const conditionsLi = document.createElement('li');
+                conditionsLi.innerHTML = `👕 <strong>Умови обміну/повернення одягу та аксесуарів:</strong>`;
+                const conditionsUl = document.createElement('ul');
+                conditionsUl.style.marginTop = '8px';
+                conditionsUl.style.paddingLeft = '20px';
+                conditionsUl.style.fontSize = '15px';
+                RETURN_CONDITIONS.forEach(function(condition) {
+                    const conditionLi = document.createElement('li');
+                    conditionLi.textContent = condition;
+                    conditionsUl.appendChild(conditionLi);
+                });
+                conditionsLi.appendChild(conditionsUl);
+                exchangeReturnList.appendChild(conditionsLi);
+                
+                const contactLi = document.createElement('li');
+                contactLi.innerHTML = `📞 <strong>Для обміну/повернення:</strong> зв'яжіться з менеджером через Viber або Telegram`;
+                exchangeReturnList.appendChild(contactLi);
+                
+                const moneyLi = document.createElement('li');
+                moneyLi.innerHTML = `💰 <strong>Повернення коштів:</strong> здійснюється на ті самі реквізити, з яких була здійснена оплата, протягом <strong>${RETURN_MONEY_TIME}</strong> після отримання товару назад`;
+                exchangeReturnList.appendChild(moneyLi);
+                
+                const deliveryCostLi = document.createElement('li');
+                deliveryCostLi.innerHTML = `🚚 <strong>Вартість доставки:</strong> ${RETURN_DELIVERY_COST}`;
+                exchangeReturnList.appendChild(deliveryCostLi);
+            } else {
+                // Якщо обмін та повернення недоступні
+                const noReturnLi = document.createElement('li');
+                noReturnLi.innerHTML = `ℹ️ <strong>Обмін та повернення товару недоступні згідно з умовами продавця.</strong>`;
+                exchangeReturnList.appendChild(noReturnLi);
+            }
+            
+            // Заповнюємо шаблон
+            const templateDisplay = document.getElementById('paymentTemplateDisplay');
+            if (templateDisplay) {
+                templateDisplay.textContent = AFTER_PAYMENT_TEMPLATE;
+            }
+            
+            // Налаштовуємо Google Calendar iframe та кнопку підписки
+            if (GOOGLE_CALENDAR_URL_OR_ID && GOOGLE_CALENDAR_URL_OR_ID.trim() !== '') {
+                const calendarIdRaw = extractCalendarId(GOOGLE_CALENDAR_URL_OR_ID);
+                if (calendarIdRaw) {
+                    const calendarSection = document.getElementById('calendarSection');
+                    const calendarIframe = document.getElementById('calendarIframe');
+                    const calendarContainer = document.querySelector('.calendar-container');
+                    
+                    if (calendarSection) {
+                        calendarSection.style.display = 'block';
+                    }
+                    
+                    // Видаляємо повідомлення про помилку, якщо воно є
+                    if (calendarContainer) {
+                        const errorDiv = calendarContainer.querySelector('.calendar-error-message');
+                        if (errorDiv) {
+                            errorDiv.remove();
+                        }
+                    }
+                    
+                    // Налаштовуємо iframe з Google Calendar Agenda View
+                    if (calendarIframe) {
+                        const calendarIdEncoded = encodeURIComponent(calendarIdRaw);
+                        const iframeUrl = `https://calendar.google.com/calendar/embed?src=${calendarIdEncoded}&ctz=Europe%2FKiev&mode=AGENDA&showNav=0&showTitle=0&showPrint=0&showCalendars=0&showTabs=0`;
+                        calendarIframe.src = iframeUrl;
+                        calendarIframe.style.display = 'block';
+                        console.log('✅ Google Calendar iframe налаштовано:', iframeUrl);
+                    }
+                } else {
+                    console.error('❌ Не вдалося витягти Calendar ID');
+                    showCalendarNotSynced();
+                }
+            } else {
+                // Показуємо повідомлення про відсутність синхронізації
+                console.log('⚠️ Calendar URL не вказано');
+                showCalendarNotSynced();
+            }
+            
+            // Заповнюємо умови повернення
+            document.getElementById('returnDays').textContent = RETURN_DAYS;
+            document.getElementById('returnMoneyTime').textContent = RETURN_MONEY_TIME;
+            document.getElementById('returnDeliveryCost').textContent = RETURN_DELIVERY_COST;
+            
+            const returnConditionsList = document.getElementById('returnConditionsList');
+            returnConditionsList.innerHTML = '';
+            RETURN_CONDITIONS.forEach(function(condition) {
+                const li = document.createElement('li');
+                li.textContent = condition;
+                returnConditionsList.appendChild(li);
+            });
+            
+            // Заповнюємо footer посилання
+            const footerTelegramLink = document.getElementById('footerTelegramLink');
+            footerTelegramLink.href = 'https://t.me/' + TELEGRAM_USERNAME;
+            
+            // Перевірка безпеки після завантаження
+            if (!checkSecurity()) {
+                return;
+            }
+            
+            // Постійний моніторинг безпеки
+            setInterval(function() {
+                if (!checkSecurity()) {
+                    return;
+                }
+            }, 1000);
+            
+            // Відстеження змін в DOM (MutationObserver)
+            const observer = new MutationObserver(function(mutations) {
+                if (!checkSecurity()) {
+                    observer.disconnect();
+                    return;
+                }
+            });
+            
+            // Спостереження за змінами в документі
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class', 'hidden']
+            });
+            
+            // Захист функцій від зміни
+            try {
+                Object.defineProperty(window, 'checkSecurity', {
+                    writable: false,
+                    configurable: false
+                });
+                Object.defineProperty(window, 'blockPage', {
+                    writable: false,
+                    configurable: false
+                });
+            } catch(e) {
+                // Якщо не вдалося захистити - блокуємо сторінку
+                blockPage();
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #00D2FF 0%, #FF6B9D 30%, #000000 60%, #FFFFFF 100%);
+            color: #2C2C2C;
+            line-height: 1.7;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.1);
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(20px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #00D2FF 0%, #FF6B9D 30%, #000000 60%, #FFFFFF 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 
+                0 0 10px rgba(255,255,255,0.5),
+                0 2px 8px rgba(0,0,0,0.3),
+                2px 0 0 #00D2FF,
+                -2px 0 0 #FF6B9D;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 35px 25px;
+        }
+        
+        .content p, .content li {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #4a4a4a;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 20px rgba(0,210,255,0.3);
+            position: relative;
+        }
+        
+        .fop-info {
+            background: rgba(255, 255, 255, 0.9);
+            border-left: 4px solid;
+            border-image: linear-gradient(135deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%) 1;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 4px 20px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            border-right: 2px solid rgba(255,255,255,0.5);
+            border-top: 2px solid rgba(255,255,255,0.5);
+            border-bottom: 2px solid rgba(255,255,255,0.5);
+        }
+        
+        .fop-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #4a4a4a;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .copy-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .copy-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .copy-section h3 {
+            color: #5A6B7D;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .data-block {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px 18px;
+            margin: 12px 0;
+            border: 2px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .data-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,210,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .data-block:hover::before {
+            left: 100%;
+        }
+        
+        .data-label {
+            font-size: 14px;
+            color: #5A6B7D;
+            font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .data-value {
+            font-size: 11px;
+            font-weight: 600;
+            color: #4a4a4a;
+            font-family: 'Montserrat', monospace;
+            word-break: break-all;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.4;
+        }
+        
+        .copy-button {
+            background: linear-gradient(135deg, #00D2FF 0%, #6C5CE7 50%, #FF6B9D 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+            box-shadow: 
+                0 4px 15px rgba(0,210,255,0.4),
+                0 0 0 1px rgba(255,255,255,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            font-family: 'Montserrat', sans-serif;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .copy-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .copy-button:hover::before {
+            left: 100%;
+        }
+        
+        .copy-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(0,210,255,0.6),
+                0 0 0 2px rgba(255,255,255,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .copy-button:active {
+            transform: translateY(0);
+        }
+        
+        .divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%, transparent);
+            background-size: 200% 100%;
+            animation: gradientShift 4s ease infinite;
+            margin: 35px 0;
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(0,210,255,0.3);
+        }
+        
+        .payment-options {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .payment-option {
+            padding: 8px 0;
+            margin: 6px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .payment-option strong {
+            color: #6B7A8F;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .delivery-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .delivery-list li {
+            padding: 8px 0;
+            margin: 6px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .delivery-list li strong {
+            color: #6B7A8F;
+            font-weight: 600;
+        }
+        
+        .return-conditions {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 25px 0;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 8px 30px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .return-conditions::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .return-conditions h3 {
+            color: #8B6F47;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .return-conditions ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .return-conditions li {
+            padding: 8px 0;
+            border-bottom: 1px solid #FFE5B4;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .return-conditions li:last-child {
+            border-bottom: none;
+        }
+        
+        .contact-section {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2C2C2C;
+            padding: 25px;
+            border-radius: 20px;
+            margin: 25px 0;
+            box-shadow: 
+                0 8px 30px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255,255,255,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .contact-section h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #5A6B7D;
+        }
+        
+        .contact-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .contact-button {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 14px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .contact-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: #6B7A8F;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .contact-copy-button {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 12px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .contact-copy-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: #6B7A8F;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .contact-columns {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .contact-column {
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .contact-column-telegram {
+            background: linear-gradient(135deg, #00D2FF 0%, #6C5CE7 50%, #FF6B9D 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+            box-shadow: 0 8px 25px rgba(0,210,255,0.4);
+        }
+        
+        .contact-column-viber {
+            background: linear-gradient(135deg, #FF6B9D 0%, #C44569 50%, #6C5CE7 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+            box-shadow: 0 8px 25px rgba(255,107,157,0.4);
+        }
+        
+        .contact-column-showcase {
+            background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 50%, #FF6B9D 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 4.5s ease infinite;
+            box-shadow: 0 8px 25px rgba(108,92,231,0.4);
+        }
+        
+        .contact-column-instagram {
+            background: linear-gradient(135deg, #FF6B9D 0%, #F56040 50%, #FCAF45 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+            box-shadow: 0 8px 25px rgba(255,107,157,0.4);
+        }
+        
+        .contact-column-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+            color: white;
+        }
+        
+        .contact-info-text {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+            word-break: break-all;
+            color: white;
+        }
+        
+        .contact-buttons-row {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+        }
+        
+        .contact-write-button {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 10px 16px;
+            border-radius: 25px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            display: block;
+            flex: 1;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .contact-write-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+        
+        .contact-copy-button-small {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 10px 14px;
+            border-radius: 25px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            display: block;
+            flex: 1;
+            line-height: 1.3;
+            white-space: normal;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .contact-copy-button-small:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+        
+        .contact-unavailable-button {
+            background: rgba(128, 128, 128, 0.6);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Montserrat', sans-serif;
+            cursor: not-allowed;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 2px 10px rgba(0,0,0,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 600px) {
+            .contact-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .tiktok-instruction {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            border-left: 4px solid;
+            border-image: linear-gradient(135deg, #FF6B9D 0%, #FF0050 100%) 1;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 4px 20px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            border-right: 2px solid rgba(255,255,255,0.5);
+            border-top: 2px solid rgba(255,255,255,0.5);
+            border-bottom: 2px solid rgba(255,255,255,0.5);
+        }
+        
+        .tiktok-instruction-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2C2C2C;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .tiktok-instruction-text {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #4a4a4a;
+        }
+        
+        .tiktok-instruction-text strong {
+            color: #2C2C2C;
+            font-weight: 600;
+        }
+        
+        .contact-links {
+            margin-top: 15px;
+        }
+        
+        .contact-links p {
+            margin: 10px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .contact-links a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #5A6B7D;
+            font-style: italic;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        
+        .footer-credit {
+            margin-top: 40px;
+            padding: 30px;
+            font-size: 16px;
+            color: #2C2C2C;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.6);
+            box-shadow: 
+                0 8px 30px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer-credit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B9D 0%, #6C5CE7 50%, #00D2FF 100%);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .footer-credit-text {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #4a4a4a;
+        }
+        
+        .footer-credit-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .footer-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: #2C2C2C;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 16px 14px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.5);
+            text-align: center;
+            line-height: 1.5;
+            white-space: normal;
+            min-height: 70px;
+            width: 100%;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,210,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .footer-link:hover::before {
+            left: 100%;
+        }
+        
+        .footer-link:hover {
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            border-color: rgba(255,255,255,0.8);
+        }
+        
+        .footer-link:active {
+            transform: translateY(0);
+        }
+        
+        .footer-link-telegram {
+            background: linear-gradient(135deg, rgba(0,210,255,0.2) 0%, rgba(108,92,231,0.2) 100%);
+        }
+        
+        .footer-link-telegram:hover {
+            background: linear-gradient(135deg, rgba(0,210,255,0.3) 0%, rgba(108,92,231,0.3) 100%);
+            color: #0088cc;
+        }
+        
+        .footer-link-tiktok {
+            background: linear-gradient(135deg, rgba(255,107,157,0.2) 0%, rgba(196,69,105,0.2) 100%);
+        }
+        
+        .footer-link-tiktok:hover {
+            background: linear-gradient(135deg, rgba(255,107,157,0.3) 0%, rgba(196,69,105,0.3) 100%);
+            color: #000000;
+        }
+        
+        @media (max-width: 600px) {
+            .footer-credit-links {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-block {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .data-label {
+                margin-bottom: 5px;
+            }
+            
+            .data-value {
+                margin-bottom: 8px;
+                width: 100%;
+            }
+            
+            .copy-button {
+                width: 100%;
+            }
+            
+            .contact-columns {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+        
+        @media (min-width: 601px) {
+            .contact-columns {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .footer-tiktok-instruction {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 243, 205, 0.6);
+            border-radius: 10px;
+            border-left: 3px solid #FFD89B;
+        }
+        
+        .footer-tiktok-instruction p {
+            margin: 0;
+        }
+        
+        /* Стилі для календаря */
+        .calendar-container {
+            margin-top: 20px;
+        }
+        
+        .calendar-events {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .calendar-event {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #8FA3B8;
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .calendar-event:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calendar-event-date {
+            font-size: 16px;
+            font-weight: 600;
+            color: #5A6B7D;
+            margin-bottom: 8px;
+        }
+        
+        .calendar-event-time {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2C2C2C;
+            margin-bottom: 8px;
+        }
+        
+        .calendar-event-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: #4a4a4a;
+            line-height: 1.5;
+        }
+        
+        .calendar-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6B7A8F;
+            font-size: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .calendar-not-synced {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8B6F47;
+            font-size: 18px;
+            font-weight: 600;
+            background: rgba(255, 243, 205, 0.8);
+            border: 2px solid #FFD89B;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .calendar-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .calendar-add-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #8FA3B8 0%, #6B7A8F 100%);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(107, 122, 143, 0.3);
+        }
+        
+        .calendar-add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(107, 122, 143, 0.4);
+            background: linear-gradient(135deg, #6B7A8F 0%, #5A6B7D 100%);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            #calendarIframe {
+                height: 400px !important;
+                min-height: 350px !important;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+        }
+        
+        /* Приховані якорі захисту */
+        .veo-anchor {
+            position: absolute;
+            color: transparent;
+            font-size: 1px;
+            line-height: 1px;
+            opacity: 0.01;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            z-index: -1;
+            font-weight: 300;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .veo-anchor-bg-light {
+            color: #E8E8E8;
+        }
+        
+        .veo-anchor-bg-white {
+            color: white;
+        }
+        
+        .veo-anchor-bg-gray {
+            color: #D0D8E0;
+        }
+        
+        /* Захист від приховування через CSS */
+        .veo-anchor[style*="display: none"],
+        .veo-anchor[style*="display:none"],
+        .veo-anchor[hidden] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 0.01 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Прихований якір захисту 1 -->
+        <span id="veoAnchor1" class="veo-anchor veo-anchor-bg-white">VEO FORCE</span>
+        
+        <div class="header">
+            <h1 id="shopNameHeader"></h1>
+            <p style="text-align: center; font-size: 16px; color: white; margin-top: 8px; font-weight: 500;">ТікТок-магазин</p>
+            <!-- Прихований якір захисту 2 -->
+            <span id="veoAnchor2" class="veo-anchor veo-anchor-bg-gray">VEO FORCE</span>
+        </div>
+        
+        <div class="content">
+            <!-- Прихований якір захисту 3 -->
+            <span id="veoAnchor3" class="veo-anchor veo-anchor-bg-white">VEO FORCE</span>
+            
+            <div class="section">
+                <div class="section-title">
+                    <span>🔹</span>
+                    <span>Реквізити для оплати:</span>
+                </div>
+                
+                <div class="fop-info">
+                    <div class="fop-name" id="fopName"></div>
+                </div>
+                
+                <div class="copy-section">
+                    <h3>👇 Скопіюйте для оплати 👇</h3>
+                    
+                    <div class="data-block">
+                        <div class="data-label">💳 IBAN <span id="bankName"></span>:</div>
+                        <div class="data-value" id="ibanValue"></div>
+                        <button class="copy-button" id="copyIbanButton" onclick="copyIBAN()">Скопіювати IBAN</button>
+                    </div>
+                    
+                    <div class="data-block">
+                        <div class="data-label">🏢 ЄДРПОУ:</div>
+                        <div class="data-value" id="edrpouValue"></div>
+                        <button class="copy-button" id="copyEdrpouButton" onclick="copyEDRPOU()">Скопіювати ЄДРПОУ</button>
+                    </div>
+                    
+                    <div class="data-block">
+                        <div class="data-label">📝 Призначення платежу:</div>
+                        <div class="data-value" id="paymentPurposeValue"></div>
+                        <button class="copy-button" id="copyPurposeButton" onclick="copyPaymentPurpose()">Скопіювати призначення</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <!-- БЛОК "ПІСЛЯ ОПЛАТИ" -->
+            <div class="section">
+                <h3 style="margin: 0 0 18px 0; color: #5A6B7D; font-size: 20px; font-weight: 600;">📦 Після оплати:</h3>
+                <div class="data-block">
+                    <p style="margin-bottom: 15px; font-size: 16px; line-height: 1.7;">
+                        Надішліть менеджеру <strong>скріншот квитанції про успішну оплату</strong>, а також <strong>заповніть шаблон</strong>:
+                    </p>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #8FA3B8;">
+                        <div style="font-family: 'Montserrat', monospace; font-size: 16px; line-height: 1.8; white-space: pre-line; color: #4a4a4a;" id="paymentTemplateDisplay"></div>
+                    </div>
+                    
+                    <button class="copy-button" id="copyTemplateButton" onclick="copyPaymentTemplate()">Скопіювати текст шаблону</button>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="section">
+                <!-- Прихований якір захисту 4 -->
+                <span id="veoAnchor4" class="veo-anchor veo-anchor-bg-white">VEO FORCE</span>
+                
+                <div class="contact-section">
+                    <h3>📞 Зв'язок з магазином:</h3>
+                    <!-- Прихований якір захисту 5 -->
+                    <span id="veoAnchor5" class="veo-anchor veo-anchor-bg-white">VEO FORCE</span>
+                    
+                    <div class="contact-columns">
+                        <div class="contact-column contact-column-telegram">
+                            <div class="contact-column-title">Телеграм</div>
+                            <div class="contact-info-text" id="telegramUsername"></div>
+                            <div class="contact-buttons-row">
+                                <button class="contact-write-button" onclick="openTelegram()">Відкрити</button>
+                                <button class="contact-copy-button-small" id="copyTelegramButton" onclick="copyTelegramUsername()">Скопіювати<br>username</button>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-column contact-column-viber">
+                            <div class="contact-column-title">Вайбер</div>
+                            <div class="contact-info-text" id="viberPhone"></div>
+                            <div class="contact-buttons-row">
+                                <button class="contact-write-button" onclick="openViber()">Відкрити</button>
+                                <button class="contact-copy-button-small" id="copyViberPhoneButton" onclick="copyViberPhone()">Скопіювати<br>номер</button>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-column contact-column-showcase">
+                            <div class="contact-column-title">Вітрина</div>
+                            <div class="contact-info-text" id="telegramShowcase"></div>
+                            <div class="contact-buttons-row" id="telegramShowcaseButtons">
+                                <button class="contact-write-button" onclick="openTelegramShowcase()">Відкрити</button>
+                                <button class="contact-copy-button-small" id="copyTelegramShowcaseButton" onclick="copyTelegramShowcase()">Скопіювати<br>username</button>
+                            </div>
+                            <button class="contact-unavailable-button" id="telegramShowcaseUnavailable" style="display: none;">Недоступно</button>
+                        </div>
+                        
+                        <div class="contact-column contact-column-instagram" id="instagramColumn">
+                            <div class="contact-column-title">Інстаграм</div>
+                            <div class="contact-info-text" id="instagramUsername"></div>
+                            <div class="contact-buttons-row" id="instagramButtons">
+                                <button class="contact-write-button" onclick="openInstagram()">Відкрити</button>
+                                <button class="contact-copy-button-small" id="copyInstagramButton" onclick="copyInstagramUsername()">Скопіювати<br>username</button>
+                            </div>
+                            <button class="contact-unavailable-button" id="instagramUnavailable" style="display: none;">Недоступно</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tiktok-instruction">
+                        <div class="tiktok-instruction-title">
+                            <span>📱</span>
+                            <span>Для користувачів TikTok:</span>
+                        </div>
+                        <div class="tiktok-instruction-text">
+                            Для роботи кнопок <strong>"Відкрити"</strong>: натисніть <strong>три крапки вгорі праворуч</strong> → <strong>"відкрити в браузері"</strong>. Або <strong>скопіюйте username/номер</strong> та знайдіть контакт вручну.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <!-- БЛОК КАЛЕНДАРЯ ПРЯМИХ ЕФІРІВ (під контактами, над умовами) -->
+            <div class="section" id="calendarSection" style="display: none;">
+                <div class="section-title">
+                    <span>📅</span>
+                    <span id="calendarTitle">Розклад прямих ефірів</span>
+                </div>
+                
+                <div class="calendar-container">
+                    <!-- Google Calendar Agenda View -->
+                    <div style="border: 1px solid #dee2e6; border-radius: 15px; overflow: hidden; margin-bottom: 25px; background: white; position: relative;">
+                        <iframe 
+                            id="calendarIframe"
+                            src=""
+                            style="border: 0; width: 100%; height: 500px; display: block; min-height: 400px;"
+                            frameborder="0"
+                            scrolling="no"
+                            loading="lazy"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <!-- ОБ'ЄДНАНИЙ БЛОК УМОВ ОПЛАТИ, ДОСТАВКИ ТА ПОВЕРНЕННЯ -->
+            <div class="section return-conditions">
+                <div class="section-title" style="font-size: 16px;">
+                    <span>💳</span>
+                    <span>Умови оплати, доставки та повернення</span>
+                </div>
+                
+                <h3 style="margin: 20px 0 12px 0; color: #5A6B7D; font-size: 14px; font-weight: 600;">🔄 Варіанти оплати:</h3>
+                <div class="payment-options" id="paymentOptions">
+                    <!-- Заповнюється автоматично з константи PAYMENT_OPTIONS -->
+                </div>
+                
+                <h3 style="margin: 20px 0 12px 0; color: #5A6B7D; font-size: 14px; font-weight: 600;">🚚 Доставка по Україні:</h3>
+                <ul class="delivery-list">
+                    <li>🔷 <strong id="deliveryMethod"></strong> ✅</li>
+                    <li>🔷 Відправка: <strong id="deliveryTime"></strong></li>
+                    <li>🔷 <span id="deliveryNote"></span></li>
+                    <li>🔷 <strong>Вартість доставки:</strong> відповідно до тарифів перевізника. Сплачує отримувач.</li>
+                </ul>
+                
+                <div id="exchangeReturnSection" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 12px; color: #8B6F47; font-size: 14px; font-weight: 600;">📋 Умови обміну та повернення:</h3>
+                    <ul id="exchangeReturnList">
+                        <!-- Заповнюється автоматично з констант EXCHANGE_DAYS та RETURN_DAYS -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer">
+                ✨ <em>Дякуємо за ваше замовлення! Гарних покупок! 💫</em>
+            </div>
+            
+            <div class="footer-credit" id="footerCreditBlock">
+                <!-- Прихований якір захисту 6 -->
+                <span id="veoAnchor6" class="veo-anchor veo-anchor-bg-white">VEO FORCE</span>
+                
+                <div class="footer-credit-text">
+                    Розроблено командою<br><strong>VEO FORCE 2025</strong>
+                </div>
+                <div style="font-size: 14px; color: #6B7A8F; margin-top: 8px;">
+                    Замовити таку сторінку:
+                </div>
+                <div class="footer-credit-links">
+                    <a href="https://t.me/veoforce_support" id="footerTelegramLink" target="_blank" class="footer-link footer-link-telegram">
+                        Телеграм<br>@veoforce_support
+                    </a>
+                    <a href="https://tiktok.com/@vasil_veo" target="_blank" class="footer-link footer-link-tiktok">
+                        ТікТок-сторінка<br>@vasil_veo
+                    </a>
+                </div>
+                
+                <div class="footer-tiktok-instruction">
+                    <p style="font-size: 13px; color: #6B7A8F; margin-top: 15px; line-height: 1.6; text-align: center;">
+                        <strong>📱 Для користувачів TikTok:</strong> щоб кнопка Телеграм відкрила чат - натисніть <strong>три крапки вгорі праворуч</strong> → <strong>"відкрити в браузері"</strong> → а потім натисніть на кнопку <strong>Телеграм</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
